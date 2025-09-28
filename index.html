@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishNet Scanner - URL Threat Analysis</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --bg-card: #0d1424;
+            --accent-safe: #00d1b2;
+            --accent-warning: #ffdd57;
+            --accent-danger: #ff3860;
+            --text-light: #f5f5f5;
+            --text-muted: #8a9ba8;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: var(--bg-card) !important;
+            border-bottom: 1px solid var(--accent-safe);
+        }
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-safe);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            color: var(--text-light);
+        }
+        .risk-safe { border-left-color: var(--accent-safe); }
+        .risk-suspicious { border-left-color: var(--accent-warning); }
+        .risk-dangerous { border-left-color: var(--accent-danger); }
+        .progress::-webkit-progress-value {
+            background-color: var(--accent-safe);
+        }
+        .progress::-moz-progress-bar {
+            background-color: var(--accent-safe);
+        }
+        .console-text {
+            color: var(--accent-safe);
+            font-family: 'Courier New', monospace;
+        }
+        .glow {
+            text-shadow: 0 0 10px rgba(0, 209, 178, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <span class="console-text glow">
+                        <i class="fas fa-shield-alt"></i> PHISHNET SCANNER
+                    </span>
+                </a>
+            </div>
+            <div class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <span class="icon has-text-primary">
+                            <i class="fas fa-cloud"></i>
+                        </span>
+                        <span class="console-text">API: <span class="has-text-primary">ONLINE</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="section">
+        <div class="container">
+            <!-- Scanner Input Card -->
+            <div class="card">
+                <div class="card-content">
+                    <h2 class="title is-3 has-text-light">
+                        <i class="fas fa-search"></i> URL Threat Analysis
+                    </h2>
+                    <p class="subtitle has-text-muted">
+                        Analyze URLs for phishing, malware, and suspicious activity using multiple threat intelligence sources.
+                    </p>
+                    
+                    <div class="field has-addons">
+                        <div class="control is-expanded">
+                            <input class="input is-large" type="text" id="urlInput" placeholder="https://example.com" value="https://example.com">
+                        </div>
+                        <div class="control">
+                            <button class="button is-large is-primary" id="scanButton">
+                                <span class="icon"><i class="fas fa-search"></i></span>
+                                <span>Scan URL</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="loading" class="has-text-centered is-hidden">
+                        <div class="loader"></div>
+                        <p class="has-text-muted mt-3">Querying threat intelligence APIs...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card is-hidden" id="resultsCard">
+                <div class="card-content">
+                    <h3 class="title is-4 has-text-light">
+                        <i class="fas fa-chart-bar"></i> Scan Results
+                    </h3>
+                    
+                    <!-- Risk Score -->
+                    <div class="level">
+                        <div class="level-item has-text-centered">
+                            <div>
+                                <p class="heading">Risk Score</p>
+                                <p class="title is-1" id="riskScore">0</p>
+                                <p class="subtitle is-6" id="riskVerdict">UNKNOWN</p>
+                            </div>
+                        </div>
+                        <div class="level-item has-text-centered">
+                            <div>
+                                <p class="heading">Google Safe Browsing</p>
+                                <p class="title is-4" id="googleResult">-</p>
+                                <p class="subtitle is-6">Threat Detection</p>
+                            </div>
+                        </div>
+                        <div class="level-item has-text-centered">
+                            <div>
+                                <p class="heading">VirusTotal</p>
+                                <p class="title is-4" id="vtResult">-</p>
+                                <p class="subtitle is-6">Engine Detections</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <progress class="progress is-primary" id="riskProgress" value="0" max="100">0%</progress>
+
+                    <!-- Detailed Results -->
+                    <div class="content mt-5">
+                        <h4 class="title is-5 has-text-light">Detailed Analysis</h4>
+                        <div id="detailedResults">
+                            <!-- Results will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Information Card -->
+            <div class="card">
+                <div class="card-content">
+                    <h3 class="title is-4 has-text-light">
+                        <i class="fas fa-info-circle"></i> About This Scanner
+                    </h3>
+                    <p class="has-text-muted">
+                        PhishNet Scanner queries multiple threat intelligence sources to analyze URLs for potential security threats.
+                        It uses Google Safe Browsing and VirusTotal APIs to provide comprehensive threat assessment.
+                    </p>
+                    <br>
+                    <div class="tags">
+                        <span class="tag is-primary">Google Safe Browsing</span>
+                        <span class="tag is-info">VirusTotal</span>
+                        <span class="tag is-warning">Real-time Analysis</span>
+                        <span class="tag is-danger">Threat Intelligence</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Configuration - UPDATE THIS WITH YOUR WORKER URL
+        const API_BASE_URL = 'https://phishnet-scanner.your-username.workers.dev';
+
+        // DOM Elements
+        const urlInput = document.getElementById('urlInput');
+        const scanButton = document.getElementById('scanButton');
+        const loadingElement = document.getElementById('loading');
+        const resultsCard = document.getElementById('resultsCard');
+        const riskScoreElement = document.getElementById('riskScore');
+        const riskVerdictElement = document.getElementById('riskVerdict');
+        const googleResultElement = document.getElementById('googleResult');
+        const vtResultElement = document.getElementById('vtResult');
+        const riskProgress = document.getElementById('riskProgress');
+        const detailedResults = document.getElementById('detailedResults');
+
+        // Scan URL function
+        async function scanURL() {
+            const urlToScan = urlInput.value.trim();
+            
+            if (!urlToScan) {
+                alert('Please enter a URL to scan');
+                return;
+            }
+
+            // Basic URL validation
+            try {
+                new URL(urlToScan);
+            } catch (e) {
+                alert('Please enter a valid URL (include http:// or https://)');
+                return;
+            }
+
+            // Show loading state
+            scanButton.disabled = true;
+            scanButton.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Scanning...</span>';
+            loadingElement.classList.remove('is-hidden');
+            resultsCard.classList.add('is-hidden');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/scan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ urlToScan: urlToScan })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Scan failed:', error);
+                alert('Scan failed: ' + error.message);
+            } finally {
+                // Reset UI
+                scanButton.disabled = false;
+                scanButton.innerHTML = '<span class="icon"><i class="fas fa-search"></i></span><span>Scan URL</span>';
+                loadingElement.classList.add('is-hidden');
+            }
+        }
+
+        // Display results function
+        function displayResults(data) {
+            // Update risk score and verdict
+            riskScoreElement.textContent = data.riskScore;
+            riskVerdictElement.textContent = data.verdict;
+            riskProgress.value = data.riskScore;
+
+            // Update card border color based on risk
+            resultsCard.className = 'card';
+            if (data.riskScore < 30) {
+                resultsCard.classList.add('risk-safe');
+                riskScoreElement.className = 'title is-1 has-text-success';
+            } else if (data.riskScore < 70) {
+                resultsCard.classList.add('risk-suspicious');
+                riskScoreElement.className = 'title is-1 has-text-warning';
+            } else {
+                resultsCard.classList.add('risk-dangerous');
+                riskScoreElement.className = 'title is-1 has-text-danger';
+            }
+
+            // Update API results
+            googleResultElement.textContent = data.details.googleSafeBrowsing.hasMatches ? 'THREATS FOUND' : 'CLEAN';
+            googleResultElement.className = data.details.googleSafeBrowsing.hasMatches ? 'title is-4 has-text-danger' : 'title is-4 has-text-success';
+
+            vtResultElement.textContent = `${data.details.virusTotal.positives}/${data.details.virusTotal.total}`;
+            vtResultElement.className = data.details.virusTotal.positives > 0 ? 'title is-4 has-text-warning' : 'title is-4 has-text-success';
+
+            // Update detailed results
+            detailedResults.innerHTML = `
+                <div class="content">
+                    <p><strong>Scanned URL:</strong> <code>${data.url}</code></p>
+                    <p><strong>Scan Time:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                    
+                    <h5 class="title is-6 has-text-light mt-4">Google Safe Browsing</h5>
+                    <p>Threats Detected: <strong>${data.details.googleSafeBrowsing.hasMatches ? 'YES' : 'NO'}</strong></p>
+                    ${data.details.googleSafeBrowsing.matches.length > 0 ? 
+                        `<p>Threat Types: ${data.details.googleSafeBrowsing.matches.map(match => match.threatType).join(', ')}</p>` : 
+                        ''}
+                    
+                    <h5 class="title is-6 has-text-light mt-4">VirusTotal</h5>
+                    <p>Detections: <strong>${data.details.virusTotal.positives} out of ${data.details.virusTotal.total}</strong> engines flagged this URL</p>
+                    <p>Last Scan: ${data.details.virusTotal.scanDate}</p>
+                    ${data.details.virusTotal.permalink !== '#' ? 
+                        `<a href="${data.details.virusTotal.permalink}" target="_blank" class="button is-small is-info">View Full Report</a>` : 
+                        ''}
+                </div>
+            `;
+
+            // Show results card
+            resultsCard.classList.remove('is-hidden');
+        }
+
+        // Event Listeners
+        scanButton.addEventListener('click', scanURL);
+        urlInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                scanURL();
+            }
+        });
+
+        // Initialize
+        console.log('PhishNet Scanner Frontend Loaded');
+    </script>
+</body>
+</html>
