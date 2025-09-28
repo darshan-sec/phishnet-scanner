@@ -48,42 +48,34 @@
         .risk-suspicious { border-top: 4px solid var(--accent-warning); }
         .risk-dangerous { border-top: 4px solid var(--accent-danger); }
         
+        /* Threat Indicator Styles */
+        .threat-indicator {
+            border-left: 4px solid;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.05);
+        }
+        .threat-critical { border-left-color: #ff3860; background: rgba(255,56,96,0.1); }
+        .threat-high { border-left-color: #ff470f; background: rgba(255,71,15,0.1); }
+        .threat-medium { border-left-color: #ffdd57; background: rgba(255,221,87,0.1); }
+        .threat-low { border-left-color: #23d160; background: rgba(35,209,96,0.1); }
+        
+        .blocked-url {
+            background: rgba(255,56,96,0.2) !important;
+            border: 2px solid #ff3860 !important;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .suspicious-url {
+            background: rgba(255,221,87,0.2) !important;
+            border: 2px solid #ffdd57 !important;
+        }
+        
         .console-text {
             color: var(--accent-safe);
             font-family: 'Courier New', monospace;
             text-shadow: 0 0 10px rgba(0, 209, 178, 0.5);
         }
-        
-        /* Animated Risk Meter */
-        .risk-meter {
-            position: relative;
-            height: 120px;
-            margin: 20px 0;
-        }
-        .risk-needle {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 4px;
-            height: 60px;
-            background: var(--text-light);
-            transform-origin: bottom center;
-            transition: transform 1s ease-in-out;
-            z-index: 2;
-        }
-        .risk-arc {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 200px;
-            height: 100px;
-            border: 8px solid transparent;
-            border-top: 8px solid var(--accent-safe);
-            border-radius: 100px 100px 0 0;
-            transform: translateX(-50%);
-        }
-        .risk-arc.mid { border-top-color: var(--accent-warning); width: 150px; }
-        .risk-arc.high { border-top-color: var(--accent-danger); width: 100px; }
         
         /* Alert Animations */
         @keyframes alertPulse {
@@ -95,10 +87,6 @@
             0%, 100% { text-shadow: 0 0 5px currentColor; }
             50% { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
         }
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
         
         .alert-pulse {
             animation: alertPulse 2s infinite, glow 3s ease-in-out infinite;
@@ -106,10 +94,6 @@
         .danger-glow {
             animation: glow 2s ease-in-out infinite;
             color: var(--accent-danger) !important;
-        }
-        .warning-glow {
-            animation: glow 3s ease-in-out infinite;
-            color: var(--accent-warning) !important;
         }
         
         /* Scanner Beam Effect */
@@ -124,58 +108,31 @@
             100% { transform: translateX(100%); }
         }
         
-        /* Stats Cards */
-        .stat-card {
-            background: linear-gradient(135deg, rgba(13, 20, 36, 0.9) 0%, rgba(13, 20, 36, 0.7) 100%);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+        /* Threat Level Indicators */
+        .threat-level {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
         }
-        .stat-card:hover {
-            transform: translateY(-3px);
-            border-color: var(--accent-info);
-        }
+        .level-critical { background: #ff3860; color: white; }
+        .level-high { background: #ff470f; color: white; }
+        .level-medium { background: #ffdd57; color: black; }
+        .level-low { background: #23d160; color: white; }
         
-        /* Terminal Output */
-        .terminal {
-            background: #1a1a1a;
-            border-radius: 8px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            color: var(--accent-safe);
-            border: 1px solid #333;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .terminal-line {
-            margin: 5px 0;
-        }
-        .terminal-prompt {
-            color: var(--accent-info);
-        }
-        
-        /* Loading Animation */
-        .cyber-loader {
-            display: inline-block;
-            width: 80px;
-            height: 80px;
-        }
-        .cyber-loader:after {
-            content: " ";
-            display: block;
-            width: 64px;
-            height: 64px;
-            margin: 8px;
-            border-radius: 50%;
-            border: 6px solid var(--accent-safe);
-            border-color: var(--accent-safe) transparent var(--accent-safe) transparent;
-            animation: cyber-loader 1.2s linear infinite;
-        }
-        @keyframes cyber-loader {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Blocked overlay */
+        .blocked-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,56,96,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
         }
     </style>
 </head>
@@ -195,8 +152,8 @@
                 <div class="navbar-end">
                     <div class="navbar-item">
                         <div class="tags has-addons">
-                            <span class="tag is-dark">STATUS</span>
-                            <span class="tag is-success console-text">OPERATIONAL</span>
+                            <span class="tag is-dark">THREAT LEVEL</span>
+                            <span class="tag is-warning" id="globalThreatLevel">MEDIUM</span>
                         </div>
                     </div>
                 </div>
@@ -207,42 +164,56 @@
     <!-- Main Content -->
     <section class="section">
         <div class="container">
-            <!-- Header Stats -->
-            <div class="columns is-multiline mb-6">
-                <div class="column is-3">
-                    <div class="stat-card">
-                        <div class="icon is-large has-text-info">
-                            <i class="fas fa-globe fa-2x"></i>
+            <!-- Active Threats Overview -->
+            <div class="card mb-5">
+                <div class="card-content">
+                    <h2 class="title is-3 has-text-light mb-4">
+                        <i class="fas fa-radiation"></i> ACTIVE THREAT INDICATORS
+                    </h2>
+                    
+                    <div class="columns is-multiline">
+                        <!-- Critical Threats -->
+                        <div class="column is-6">
+                            <div class="threat-indicator threat-critical">
+                                <div class="is-flex is-justify-content-space-between">
+                                    <strong>Phishing Campaign Active</strong>
+                                    <span class="threat-level level-critical">CRITICAL</span>
+                                </div>
+                                <p class="is-size-7">Multiple fake login pages targeting banking services detected</p>
+                            </div>
                         </div>
-                        <h3 class="title is-4 has-text-light mt-2" id="totalScans">0</h3>
-                        <p class="has-text-muted">URLs Analyzed</p>
-                    </div>
-                </div>
-                <div class="column is-3">
-                    <div class="stat-card">
-                        <div class="icon is-large has-text-success">
-                            <i class="fas fa-check-circle fa-2x"></i>
+                        
+                        <!-- High Threats -->
+                        <div class="column is-6">
+                            <div class="threat-indicator threat-high">
+                                <div class="is-flex is-justify-content-space-between">
+                                    <strong>Malware Distribution</strong>
+                                    <span class="threat-level level-high">HIGH</span>
+                                </div>
+                                <p class="is-size-7">Fake software updates spreading ransomware</p>
+                            </div>
                         </div>
-                        <h3 class="title is-4 has-text-light mt-2" id="safeCount">0</h3>
-                        <p class="has-text-muted">Safe URLs</p>
-                    </div>
-                </div>
-                <div class="column is-3">
-                    <div class="stat-card">
-                        <div class="icon is-large has-text-warning">
-                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        
+                        <!-- Medium Threats -->
+                        <div class="column is-6">
+                            <div class="threat-indicator threat-medium">
+                                <div class="is-flex is-justify-content-space-between">
+                                    <strong>Suspicious Redirects</strong>
+                                    <span class="threat-level level-medium">MEDIUM</span>
+                                </div>
+                                <p class="is-size-7">Legitimate sites compromised with malicious redirects</p>
+                            </div>
                         </div>
-                        <h3 class="title is-4 has-text-light mt-2" id="suspiciousCount">0</h3>
-                        <p class="has-text-muted">Suspicious</p>
-                    </div>
-                </div>
-                <div class="column is-3">
-                    <div class="stat-card">
-                        <div class="icon is-large has-text-danger">
-                            <i class="fas fa-skull-crossbones fa-2x"></i>
+                        
+                        <div class="column is-6">
+                            <div class="threat-indicator threat-medium">
+                                <div class="is-flex is-justify-content-space-between">
+                                    <strong>Fake Tech Support</strong>
+                                    <span class="threat-level level-medium">MEDIUM</span>
+                                </div>
+                                <p class="is-size-7">Scam sites pretending to be Microsoft/Apple support</p>
+                            </div>
                         </div>
-                        <h3 class="title is-4 has-text-light mt-2" id="dangerousCount">0</h3>
-                        <p class="has-text-muted">Dangerous</p>
                     </div>
                 </div>
             </div>
@@ -258,7 +229,7 @@
                     </div>
                     
                     <p class="subtitle has-text-muted mb-4">
-                        Enter URL for comprehensive threat intelligence analysis and reputation check
+                        Enter URL for comprehensive threat intelligence analysis
                     </p>
                     
                     <div class="scanner-beam"></div>
@@ -272,29 +243,34 @@
                         <div class="control">
                             <button class="button is-large is-primary" id="scanButton" style="font-weight: bold;">
                                 <span class="icon"><i class="fas fa-search"></i></span>
-                                <span>INITIATE SCAN</span>
+                                <span>SCAN URL</span>
                             </button>
                         </div>
                     </div>
                     
-                    <div id="loading" class="has-text-centered is-hidden">
-                        <div class="cyber-loader"></div>
-                        <p class="has-text-muted mt-3 console-text">> QUERYING THREAT INTELLIGENCE APIS...</p>
-                        <div class="terminal mt-3">
-                            <div class="terminal-line"><span class="terminal-prompt">></span> Connecting to Google Safe Browsing API...</div>
-                            <div class="terminal-line"><span class="terminal-prompt">></span> Accessing VirusTotal Database...</div>
-                            <div class="terminal-line"><span class="terminal-prompt">></span> Analyzing URL reputation...</div>
+                    <!-- Blocked URLs List -->
+                    <div id="blockedUrls" class="mt-4" style="display: none;">
+                        <h4 class="title is-5 has-text-light mb-3">
+                            <i class="fas fa-ban"></i> BLOCKED & SUSPICIOUS URLs
+                        </h4>
+                        <div id="blockedList" class="content">
+                            <!-- Blocked URLs will appear here -->
                         </div>
+                    </div>
+                    
+                    <div id="loading" class="has-text-centered is-hidden">
+                        <div class="loader"></div>
+                        <p class="has-text-muted mt-3 console-text">> ANALYZING THREAT INDICATORS...</p>
                     </div>
                 </div>
             </div>
 
             <!-- Results Card -->
-            <div class="card is-hidden" id="resultsCard" style="animation: slideIn 0.5s ease-out;">
+            <div class="card is-hidden" id="resultsCard">
                 <div class="card-content">
                     <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
                         <h3 class="title is-3 has-text-light">
-                            <i class="fas fa-chart-bar"></i> THREAT ASSESSMENT REPORT
+                            <i class="fas fa-chart-bar"></i> THREAT ASSESSMENT
                         </h3>
                         <div id="verdictBadge" class="tags has-addons">
                             <span class="tag is-dark">VERDICT</span>
@@ -302,20 +278,12 @@
                         </div>
                     </div>
 
-                    <!-- Risk Meter -->
-                    <div class="risk-meter">
-                        <div class="risk-arc high"></div>
-                        <div class="risk-arc mid"></div>
-                        <div class="risk-arc"></div>
-                        <div class="risk-needle" id="riskNeedle"></div>
-                    </div>
-                    
                     <!-- Quick Stats -->
                     <div class="level">
                         <div class="level-item has-text-centered">
                             <div>
                                 <p class="heading">RISK SCORE</p>
-                                <p class="title is-1 danger-glow" id="riskScore">0</p>
+                                <p class="title is-1" id="riskScore">0</p>
                                 <p class="subtitle is-6 console-text" id="riskVerdict">INITIALIZING</p>
                             </div>
                         </div>
@@ -328,49 +296,62 @@
                         </div>
                         <div class="level-item has-text-centered">
                             <div>
-                                <p class="heading">VIRUSTOTAL DETECTIONS</p>
+                                <p class="heading">VIRUSTOTAL</p>
                                 <p class="title is-3" id="vtResult">-</p>
-                                <p class="subtitle is-6">Security Engines</p>
+                                <p class="subtitle is-6">Engine Detections</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Alert Banner -->
-                    <div id="alertBanner" class="notification is-hidden" style="border-left: 5px solid;">
-                        <div class="is-flex is-justify-content-space-between is-align-items-center">
-                            <div>
-                                <span class="icon is-large">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </span>
-                                <strong id="alertTitle">SECURITY ALERT</strong>
-                                <span id="alertMessage">Threat detected in scanned URL</span>
-                            </div>
-                            <button class="delete" id="closeAlert"></button>
-                        </div>
-                    </div>
-
-                    <!-- Detailed Results -->
-                    <div class="content mt-5">
-                        <h4 class="title is-5 has-text-light">
-                            <i class="fas fa-file-alt"></i> DETAILED ANALYSIS
+                    <!-- Threat Indicators Found -->
+                    <div id="threatIndicators" class="mt-4" style="display: none;">
+                        <h4 class="title is-5 has-text-light mb-3">
+                            <i class="fas fa-exclamation-triangle"></i> THREAT INDICATORS DETECTED
                         </h4>
-                        <div class="terminal">
-                            <div id="detailedResults">
-                                <!-- Results will be populated here -->
-                            </div>
+                        <div id="indicatorsList">
+                            <!-- Threat indicators will appear here -->
                         </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div id="actionButtons" class="is-flex is-justify-content-flex-end mt-4" style="display: none;">
+                        <button class="button is-danger mr-2" id="blockButton">
+                            <span class="icon"><i class="fas fa-ban"></i></span>
+                            <span>BLOCK URL</span>
+                        </button>
+                        <button class="button is-warning" id="markButton">
+                            <span class="icon"><i class="fas fa-flag"></i></span>
+                            <span>MARK SUSPICIOUS</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="card">
+            <!-- Blocked & Marked URLs Section -->
+            <div class="card mt-5">
                 <div class="card-content">
                     <h3 class="title is-4 has-text-light">
-                        <i class="fas fa-history"></i> SCAN HISTORY
+                        <i class="fas fa-shield-alt"></i> SECURITY CONTROLS
                     </h3>
-                    <div id="scanHistory" class="content">
-                        <p class="has-text-muted">No scan history yet. URLs will appear here after analysis.</p>
+                    
+                    <div class="columns">
+                        <div class="column">
+                            <h5 class="title is-5 has-text-light">
+                                <i class="fas fa-ban has-text-danger"></i> BLOCKED URLs
+                            </h5>
+                            <div id="blockedUrlsList" class="content">
+                                <p class="has-text-muted">No URLs blocked yet</p>
+                            </div>
+                        </div>
+                        
+                        <div class="column">
+                            <h5 class="title is-5 has-text-light">
+                                <i class="fas fa-flag has-text-warning"></i> MARKED URLs
+                            </h5>
+                            <div id="markedUrlsList" class="content">
+                                <p class="has-text-muted">No URLs marked as suspicious yet</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -389,40 +370,51 @@
             resultsCard: document.getElementById('resultsCard'),
             riskScore: document.getElementById('riskScore'),
             riskVerdict: document.getElementById('riskVerdict'),
-            riskNeedle: document.getElementById('riskNeedle'),
             googleResult: document.getElementById('googleResult'),
             vtResult: document.getElementById('vtResult'),
             verdictTag: document.getElementById('verdictTag'),
-            alertBanner: document.getElementById('alertBanner'),
-            alertTitle: document.getElementById('alertTitle'),
-            alertMessage: document.getElementById('alertMessage'),
-            detailedResults: document.getElementById('detailedResults'),
-            scanHistory: document.getElementById('scanHistory'),
-            totalScans: document.getElementById('totalScans'),
-            safeCount: document.getElementById('safeCount'),
-            suspiciousCount: document.getElementById('suspiciousCount'),
-            dangerousCount: document.getElementById('dangerousCount')
+            threatIndicators: document.getElementById('threatIndicators'),
+            indicatorsList: document.getElementById('indicatorsList'),
+            actionButtons: document.getElementById('actionButtons'),
+            blockedUrlsList: document.getElementById('blockedUrlsList'),
+            markedUrlsList: document.getElementById('markedUrlsList'),
+            blockButton: document.getElementById('blockButton'),
+            markButton: document.getElementById('markButton')
         };
 
-        let scanCount = 0;
-        let safeScans = 0;
-        let suspiciousScans = 0;
-        let dangerousScans = 0;
+        // Storage for blocked and marked URLs
+        let blockedUrls = JSON.parse(localStorage.getItem('blockedUrls') || '[]');
+        let markedUrls = JSON.parse(localStorage.getItem('markedUrls') || '[]');
+        let currentScanResult = null;
+
+        // Initialize the display
+        updateBlockedMarkedDisplay();
 
         // Scan URL function
         async function scanURL() {
             const urlToScan = elements.urlInput.value.trim();
             
             if (!urlToScan) {
-                showAlert('warning', 'Input Required', 'Please enter a URL to analyze');
+                alert('Please enter a URL to analyze');
                 return;
+            }
+
+            // Check if URL is already blocked
+            if (isUrlBlocked(urlToScan)) {
+                showBlockedWarning(urlToScan);
+                return;
+            }
+
+            // Check if URL is marked
+            if (isUrlMarked(urlToScan)) {
+                showMarkedWarning(urlToScan);
             }
 
             // Basic URL validation
             try {
                 new URL(urlToScan);
             } catch (e) {
-                showAlert('warning', 'Invalid URL', 'Please enter a valid URL (include http:// or https://)');
+                alert('Please enter a valid URL');
                 return;
             }
 
@@ -439,80 +431,192 @@
                 if (!response.ok) throw new Error(`API error: ${response.status}`);
                 const data = await response.json();
                 
-                // Update statistics
-                updateStatistics(data.riskScore);
-                addToHistory(data);
+                currentScanResult = data;
                 displayResults(data);
-                
-                // Show appropriate alert
-                if (data.riskScore >= 70) {
-                    showAlert('danger', 'HIGH RISK DETECTED!', `URL "${data.url}" shows strong indicators of malicious activity!`);
-                } else if (data.riskScore >= 30) {
-                    showAlert('warning', 'Suspicious Activity', `URL "${data.url}" shows some concerning indicators`);
-                } else {
-                    showAlert('success', 'All Clear', `URL "${data.url}" appears to be safe`);
-                }
+                showThreatIndicators(data);
 
             } catch (error) {
                 console.error('Scan failed:', error);
-                showAlert('danger', 'Scan Failed', error.message);
+                alert('Scan failed: ' + error.message);
             } finally {
                 setLoadingState(false);
             }
         }
 
-        // Display results with animations
+        // Display results
         function displayResults(data) {
-            // Update risk meter with animation
-            const riskAngle = (data.riskScore / 100) * 180 - 90;
-            elements.riskNeedle.style.transform = `rotate(${riskAngle}deg)`;
-            
-            // Update risk score with count-up animation
-            animateValue(elements.riskScore, 0, data.riskScore, 1000);
+            elements.riskScore.textContent = data.riskScore;
             elements.riskVerdict.textContent = data.verdict;
 
-            // Update card styling based on risk
+            // Update styling based on risk
             updateRiskStyling(data.riskScore, data.verdict);
 
-            // Update API results
             elements.googleResult.textContent = data.details.googleSafeBrowsing.hasMatches ? 'THREATS' : 'CLEAN';
             elements.googleResult.className = data.details.googleSafeBrowsing.hasMatches ? 
-                'title is-3 danger-glow' : 'title is-3 has-text-success';
+                'title is-3 has-text-danger' : 'title is-3 has-text-success';
             
             elements.vtResult.textContent = `${data.details.virusTotal.positives}/${data.details.virusTotal.total}`;
             elements.vtResult.className = data.details.virusTotal.positives > 0 ? 
-                'title is-3 warning-glow' : 'title is-3 has-text-success';
+                'title is-3 has-text-warning' : 'title is-3 has-text-success';
 
-            // Update detailed results
-            elements.detailedResults.innerHTML = `
-                <div class="terminal-line"><span class="terminal-prompt">></span> SCAN INITIATED: ${new Date(data.timestamp).toLocaleString()}</div>
-                <div class="terminal-line"><span class="terminal-prompt">></span> TARGET: ${data.url}</div>
-                <div class="terminal-line"><span class="terminal-prompt">></span> GOOGLE SAFE BROWSING: ${data.details.googleSafeBrowsing.hasMatches ? 'THREATS DETECTED' : 'NO THREATS'}</div>
-                <div class="terminal-line"><span class="terminal-prompt">></span> VIRUSTOTAL: ${data.details.virusTotal.positives} of ${data.details.virusTotal.total} engines detected threats</div>
-                <div class="terminal-line"><span class="terminal-prompt">></span> FINAL VERDICT: ${data.verdict} (Score: ${data.riskScore}/100)</div>
-                ${data.details.virusTotal.permalink !== '#' ? 
-                    `<div class="terminal-line"><span class="terminal-prompt">></span> FULL REPORT: <a href="${data.details.virusTotal.permalink}" target="_blank" style="color: #3273dc;">View on VirusTotal</a></div>` : 
-                    ''}
-            `;
-
-            // Show results card with animation
             elements.resultsCard.classList.remove('is-hidden');
         }
 
-        // Update risk styling and animations
-        function updateRiskStyling(riskScore, verdict) {
-            // Remove all risk classes
-            elements.resultsCard.classList.remove('risk-safe', 'risk-suspicious', 'risk-dangerous');
-            elements.riskScore.classList.remove('has-text-success', 'has-text-warning', 'has-text-danger', 'danger-glow', 'warning-glow');
+        // Show threat indicators based on scan results
+        function showThreatIndicators(data) {
+            elements.indicatorsList.innerHTML = '';
+            const indicators = [];
             
-            // Add appropriate classes
+            // Google Safe Browsing threats
+            if (data.details.googleSafeBrowsing.hasMatches) {
+                data.details.googleSafeBrowsing.matches.forEach(match => {
+                    indicators.push({
+                        level: 'critical',
+                        title: `Google Safe Browsing: ${match.threatType}`,
+                        description: 'This URL is flagged by Google as potentially dangerous'
+                    });
+                });
+            }
+            
+            // VirusTotal detections
+            if (data.details.virusTotal.positives > 0) {
+                const level = data.details.virusTotal.positives > 10 ? 'high' : 'medium';
+                indicators.push({
+                    level: level,
+                    title: `VirusTotal: ${data.details.virusTotal.positives} detections`,
+                    description: `${data.details.virusTotal.positives} security engines flagged this URL`
+                });
+            }
+            
+            // High risk score indicator
+            if (data.riskScore >= 70) {
+                indicators.push({
+                    level: 'critical',
+                    title: 'High Risk Score',
+                    description: 'Overall risk assessment indicates high probability of malicious content'
+                });
+            } else if (data.riskScore >= 30) {
+                indicators.push({
+                    level: 'medium',
+                    title: 'Suspicious Risk Score',
+                    description: 'URL shows concerning characteristics that require attention'
+                });
+            }
+            
+            // Display indicators
+            if (indicators.length > 0) {
+                indicators.forEach(indicator => {
+                    const indicatorElement = document.createElement('div');
+                    indicatorElement.className = `threat-indicator threat-${indicator.level}`;
+                    indicatorElement.innerHTML = `
+                        <div class="is-flex is-justify-content-space-between">
+                            <strong>${indicator.title}</strong>
+                            <span class="threat-level level-${indicator.level}">${indicator.level.toUpperCase()}</span>
+                        </div>
+                        <p class="is-size-7">${indicator.description}</p>
+                    `;
+                    elements.indicatorsList.appendChild(indicatorElement);
+                });
+                
+                elements.threatIndicators.style.display = 'block';
+                elements.actionButtons.style.display = 'flex';
+            } else {
+                elements.threatIndicators.style.display = 'none';
+                elements.actionButtons.style.display = 'none';
+            }
+        }
+
+        // Block URL function
+        function blockUrl() {
+            if (!currentScanResult) return;
+            
+            const url = currentScanResult.url;
+            if (!blockedUrls.includes(url)) {
+                blockedUrls.push(url);
+                localStorage.setItem('blockedUrls', JSON.stringify(blockedUrls));
+                updateBlockedMarkedDisplay();
+                alert(`🚫 URL BLOCKED: ${url}\nThis URL will be prevented from future scanning.`);
+            }
+            
+            // Apply blocked styling to input
+            elements.urlInput.classList.add('blocked-url');
+        }
+
+        // Mark URL as suspicious
+        function markUrl() {
+            if (!currentScanResult) return;
+            
+            const url = currentScanResult.url;
+            if (!markedUrls.includes(url)) {
+                markedUrls.push(url);
+                localStorage.setItem('markedUrls', JSON.stringify(markedUrls));
+                updateBlockedMarkedDisplay();
+                alert(`⚠️ URL MARKED: ${url}\nThis URL has been flagged for review.`);
+            }
+            
+            // Apply suspicious styling to input
+            elements.urlInput.classList.add('suspicious-url');
+        }
+
+        // Check if URL is blocked
+        function isUrlBlocked(url) {
+            return blockedUrls.includes(url);
+        }
+
+        // Check if URL is marked
+        function isUrlMarked(url) {
+            return markedUrls.includes(url);
+        }
+
+        // Show blocked warning
+        function showBlockedWarning(url) {
+            alert(`🚫 BLOCKED URL\n"${url}" is in the blocked list and cannot be scanned.`);
+            elements.urlInput.classList.add('blocked-url');
+        }
+
+        // Show marked warning
+        function showMarkedWarning(url) {
+            alert(`⚠️ SUSPICIOUS URL\n"${url}" has been previously marked as suspicious.`);
+            elements.urlInput.classList.add('suspicious-url');
+        }
+
+        // Update blocked and marked URLs display
+        function updateBlockedMarkedDisplay() {
+            // Update blocked URLs list
+            if (blockedUrls.length > 0) {
+                elements.blockedUrlsList.innerHTML = blockedUrls.map(url => 
+                    `<div class="blocked-url-item mb-2 p-2" style="background: rgba(255,56,96,0.1); border-radius: 5px;">
+                        <span class="has-text-danger"><i class="fas fa-ban"></i> ${url}</span>
+                    </div>`
+                ).join('');
+            } else {
+                elements.blockedUrlsList.innerHTML = '<p class="has-text-muted">No URLs blocked yet</p>';
+            }
+            
+            // Update marked URLs list
+            if (markedUrls.length > 0) {
+                elements.markedUrlsList.innerHTML = markedUrls.map(url => 
+                    `<div class="marked-url-item mb-2 p-2" style="background: rgba(255,221,87,0.1); border-radius: 5px;">
+                        <span class="has-text-warning"><i class="fas fa-flag"></i> ${url}</span>
+                    </div>`
+                ).join('');
+            } else {
+                elements.markedUrlsList.innerHTML = '<p class="has-text-muted">No URLs marked yet</p>';
+            }
+        }
+
+        // Update risk styling
+        function updateRiskStyling(riskScore, verdict) {
+            elements.resultsCard.classList.remove('risk-safe', 'risk-suspicious', 'risk-dangerous');
+            elements.riskScore.classList.remove('has-text-success', 'has-text-warning', 'has-text-danger', 'danger-glow');
+            
             if (riskScore < 30) {
                 elements.resultsCard.classList.add('risk-safe');
                 elements.riskScore.classList.add('has-text-success');
                 elements.verdictTag.className = 'tag is-success';
             } else if (riskScore < 70) {
                 elements.resultsCard.classList.add('risk-suspicious');
-                elements.riskScore.classList.add('has-text-warning', 'warning-glow');
+                elements.riskScore.classList.add('has-text-warning');
                 elements.verdictTag.className = 'tag is-warning';
             } else {
                 elements.resultsCard.classList.add('risk-dangerous');
@@ -523,78 +627,14 @@
             elements.verdictTag.textContent = verdict;
         }
 
-        // Show alert banner
-        function showAlert(type, title, message) {
-            elements.alertBanner.className = `notification is-${type} is-hidden`;
-            elements.alertTitle.textContent = title;
-            elements.alertMessage.textContent = message;
-            
-            // Add pulse animation for dangerous alerts
-            if (type === 'danger') {
-                elements.alertBanner.classList.add('alert-pulse');
-            }
-            
-            elements.alertBanner.classList.remove('is-hidden');
-        }
-
-        // Update statistics
-        function updateStatistics(riskScore) {
-            scanCount++;
-            if (riskScore < 30) safeScans++;
-            else if (riskScore < 70) suspiciousScans++;
-            else dangerousScans++;
-            
-            elements.totalScans.textContent = scanCount;
-            elements.safeCount.textContent = safeScans;
-            elements.suspiciousCount.textContent = suspiciousScans;
-            elements.dangerousCount.textContent = dangerousScans;
-        }
-
-        // Add to scan history
-        function addToHistory(data) {
-            const historyItem = document.createElement('div');
-            historyItem.className = 'is-flex is-justify-content-space-between is-align-items-center mb-2 p-2';
-            historyItem.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-            
-            const riskClass = data.riskScore < 30 ? 'has-text-success' : data.riskScore < 70 ? 'has-text-warning' : 'has-text-danger';
-            
-            historyItem.innerHTML = `
-                <span class="console-text">${data.url}</span>
-                <div>
-                    <span class="tag ${riskClass}">${data.riskScore}</span>
-                    <span class="tag is-dark ml-2">${new Date(data.timestamp).toLocaleTimeString()}</span>
-                </div>
-            `;
-            
-            elements.scanHistory.insertBefore(historyItem, elements.scanHistory.firstChild);
-            
-            // Limit history to 10 items
-            if (elements.scanHistory.children.length > 10) {
-                elements.scanHistory.removeChild(elements.scanHistory.lastChild);
-            }
-        }
-
         // Utility functions
         function setLoadingState(loading) {
             elements.scanButton.disabled = loading;
             elements.scanButton.innerHTML = loading ? 
                 '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>SCANNING...</span>' :
-                '<span class="icon"><i class="fas fa-search"></i></span><span>INITIATE SCAN</span>';
+                '<span class="icon"><i class="fas fa-search"></i></span><span>SCAN URL</span>';
             elements.loading.classList.toggle('is-hidden', !loading);
             if (!loading) elements.resultsCard.classList.add('is-hidden');
-        }
-
-        function animateValue(element, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                element.textContent = Math.floor(progress * (end - start) + start);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            };
-            window.requestAnimationFrame(step);
         }
 
         // Event Listeners
@@ -602,29 +642,15 @@
         elements.urlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') scanURL();
         });
-        document.getElementById('closeAlert').addEventListener('click', () => {
-            elements.alertBanner.classList.add('is-hidden');
+        elements.blockButton.addEventListener('click', blockUrl);
+        elements.markButton.addEventListener('click', markUrl);
+
+        // Clear URL styling when input changes
+        elements.urlInput.addEventListener('input', () => {
+            elements.urlInput.classList.remove('blocked-url', 'suspicious-url');
         });
 
-        // Initialize
-        console.log('PhishNet Scanner Enterprise Edition Loaded');
-        
-        // Add some demo history items
-        setTimeout(() => {
-            if (elements.scanHistory.children.length === 1) {
-                elements.scanHistory.innerHTML = `
-                    <p class="has-text-muted">Scan URLs to build history. Demo mode active.</p>
-                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 p-2" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span class="console-text">https://example.com</span>
-                        <div><span class="tag is-success">15</span><span class="tag is-dark ml-2">Demo</span></div>
-                    </div>
-                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 p-2" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span class="console-text">https://google.com</span>
-                        <div><span class="tag is-success">8</span><span class="tag is-dark ml-2">Demo</span></div>
-                    </div>
-                `;
-            }
-        }, 2000);
+        console.log('PhishNet Scanner with Threat Marking Loaded');
     </script>
 </body>
 </html>
