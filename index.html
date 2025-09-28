@@ -3,51 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhishNet Scanner - URL Threat Analysis</title>
+    <title>PhishNet Scanner - Enterprise Threat Intelligence</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-dark: #0a0e17;
+            --bg-darker: #050a14;
             --bg-card: #0d1424;
             --accent-safe: #00d1b2;
             --accent-warning: #ffdd57;
             --accent-danger: #ff3860;
+            --accent-info: #3273dc;
             --text-light: #f5f5f5;
             --text-muted: #8a9ba8;
         }
         body {
-            background-color: var(--bg-dark);
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
             color: var(--text-light);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            background-attachment: fixed;
         }
         .navbar {
-            background-color: var(--bg-card) !important;
-            border-bottom: 1px solid var(--accent-safe);
+            background: rgba(13, 20, 36, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--accent-info);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
         }
         .card {
-            background-color: var(--bg-card);
-            border-radius: 8px;
-            border-left: 4px solid var(--accent-safe);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            background: rgba(13, 20, 36, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             color: var(--text-light);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
-        .risk-safe { border-left-color: var(--accent-safe); }
-        .risk-suspicious { border-left-color: var(--accent-warning); }
-        .risk-dangerous { border-left-color: var(--accent-danger); }
-        .progress::-webkit-progress-value {
-            background-color: var(--accent-safe);
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 209, 178, 0.2);
         }
-        .progress::-moz-progress-bar {
-            background-color: var(--accent-safe);
-        }
+        .risk-safe { border-top: 4px solid var(--accent-safe); }
+        .risk-suspicious { border-top: 4px solid var(--accent-warning); }
+        .risk-dangerous { border-top: 4px solid var(--accent-danger); }
+        
         .console-text {
             color: var(--accent-safe);
             font-family: 'Courier New', monospace;
-        }
-        .glow {
             text-shadow: 0 0 10px rgba(0, 209, 178, 0.5);
+        }
+        
+        /* Animated Risk Meter */
+        .risk-meter {
+            position: relative;
+            height: 120px;
+            margin: 20px 0;
+        }
+        .risk-needle {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            height: 60px;
+            background: var(--text-light);
+            transform-origin: bottom center;
+            transition: transform 1s ease-in-out;
+            z-index: 2;
+        }
+        .risk-arc {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 200px;
+            height: 100px;
+            border: 8px solid transparent;
+            border-top: 8px solid var(--accent-safe);
+            border-radius: 100px 100px 0 0;
+            transform: translateX(-50%);
+        }
+        .risk-arc.mid { border-top-color: var(--accent-warning); width: 150px; }
+        .risk-arc.high { border-top-color: var(--accent-danger); width: 100px; }
+        
+        /* Alert Animations */
+        @keyframes alertPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 56, 96, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 56, 96, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 56, 96, 0); }
+        }
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 5px currentColor; }
+            50% { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .alert-pulse {
+            animation: alertPulse 2s infinite, glow 3s ease-in-out infinite;
+        }
+        .danger-glow {
+            animation: glow 2s ease-in-out infinite;
+            color: var(--accent-danger) !important;
+        }
+        .warning-glow {
+            animation: glow 3s ease-in-out infinite;
+            color: var(--accent-warning) !important;
+        }
+        
+        /* Scanner Beam Effect */
+        .scanner-beam {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-safe), transparent);
+            animation: scan 3s linear infinite;
+            margin: 10px 0;
+        }
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* Stats Cards */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(13, 20, 36, 0.9) 0%, rgba(13, 20, 36, 0.7) 100%);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-info);
+        }
+        
+        /* Terminal Output */
+        .terminal {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            color: var(--accent-safe);
+            border: 1px solid #333;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .terminal-line {
+            margin: 5px 0;
+        }
+        .terminal-prompt {
+            color: var(--accent-info);
+        }
+        
+        /* Loading Animation */
+        .cyber-loader {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+        }
+        .cyber-loader:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid var(--accent-safe);
+            border-color: var(--accent-safe) transparent var(--accent-safe) transparent;
+            animation: cyber-loader 1.2s linear infinite;
+        }
+        @keyframes cyber-loader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -58,18 +186,18 @@
         <div class="container">
             <div class="navbar-brand">
                 <a class="navbar-item" href="#">
-                    <span class="console-text glow">
-                        <i class="fas fa-shield-alt"></i> PHISHNET SCANNER
+                    <span class="console-text" style="font-size: 1.5rem;">
+                        <i class="fas fa-shield-alt"></i> PHISHNET SCANNER v2.1
                     </span>
                 </a>
             </div>
             <div class="navbar-menu">
                 <div class="navbar-end">
                     <div class="navbar-item">
-                        <span class="icon has-text-primary">
-                            <i class="fas fa-cloud"></i>
-                        </span>
-                        <span class="console-text">API: <span class="has-text-primary">ONLINE</span></span>
+                        <div class="tags has-addons">
+                            <span class="tag is-dark">STATUS</span>
+                            <span class="tag is-success console-text">OPERATIONAL</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -79,96 +207,170 @@
     <!-- Main Content -->
     <section class="section">
         <div class="container">
+            <!-- Header Stats -->
+            <div class="columns is-multiline mb-6">
+                <div class="column is-3">
+                    <div class="stat-card">
+                        <div class="icon is-large has-text-info">
+                            <i class="fas fa-globe fa-2x"></i>
+                        </div>
+                        <h3 class="title is-4 has-text-light mt-2" id="totalScans">0</h3>
+                        <p class="has-text-muted">URLs Analyzed</p>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <div class="stat-card">
+                        <div class="icon is-large has-text-success">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <h3 class="title is-4 has-text-light mt-2" id="safeCount">0</h3>
+                        <p class="has-text-muted">Safe URLs</p>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <div class="stat-card">
+                        <div class="icon is-large has-text-warning">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <h3 class="title is-4 has-text-light mt-2" id="suspiciousCount">0</h3>
+                        <p class="has-text-muted">Suspicious</p>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <div class="stat-card">
+                        <div class="icon is-large has-text-danger">
+                            <i class="fas fa-skull-crossbones fa-2x"></i>
+                        </div>
+                        <h3 class="title is-4 has-text-light mt-2" id="dangerousCount">0</h3>
+                        <p class="has-text-muted">Dangerous</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Scanner Input Card -->
             <div class="card">
                 <div class="card-content">
-                    <h2 class="title is-3 has-text-light">
-                        <i class="fas fa-search"></i> URL Threat Analysis
-                    </h2>
-                    <p class="subtitle has-text-muted">
-                        Analyze URLs for phishing, malware, and suspicious activity using multiple threat intelligence sources.
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                        <h2 class="title is-3 has-text-light">
+                            <i class="fas fa-crosshairs"></i> THREAT ANALYSIS CONSOLE
+                        </h2>
+                        <span class="tag is-info console-text">REAL-TIME SCAN</span>
+                    </div>
+                    
+                    <p class="subtitle has-text-muted mb-4">
+                        Enter URL for comprehensive threat intelligence analysis and reputation check
                     </p>
+                    
+                    <div class="scanner-beam"></div>
                     
                     <div class="field has-addons">
                         <div class="control is-expanded">
-                            <input class="input is-large" type="text" id="urlInput" placeholder="https://example.com" value="https://example.com">
+                            <input class="input is-large" type="text" id="urlInput" 
+                                   placeholder="https://example.com" value="https://example.com"
+                                   style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
                         </div>
                         <div class="control">
-                            <button class="button is-large is-primary" id="scanButton">
+                            <button class="button is-large is-primary" id="scanButton" style="font-weight: bold;">
                                 <span class="icon"><i class="fas fa-search"></i></span>
-                                <span>Scan URL</span>
+                                <span>INITIATE SCAN</span>
                             </button>
                         </div>
                     </div>
                     
                     <div id="loading" class="has-text-centered is-hidden">
-                        <div class="loader"></div>
-                        <p class="has-text-muted mt-3">Querying threat intelligence APIs...</p>
+                        <div class="cyber-loader"></div>
+                        <p class="has-text-muted mt-3 console-text">> QUERYING THREAT INTELLIGENCE APIS...</p>
+                        <div class="terminal mt-3">
+                            <div class="terminal-line"><span class="terminal-prompt">></span> Connecting to Google Safe Browsing API...</div>
+                            <div class="terminal-line"><span class="terminal-prompt">></span> Accessing VirusTotal Database...</div>
+                            <div class="terminal-line"><span class="terminal-prompt">></span> Analyzing URL reputation...</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Results Card -->
-            <div class="card is-hidden" id="resultsCard">
+            <div class="card is-hidden" id="resultsCard" style="animation: slideIn 0.5s ease-out;">
                 <div class="card-content">
-                    <h3 class="title is-4 has-text-light">
-                        <i class="fas fa-chart-bar"></i> Scan Results
-                    </h3>
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                        <h3 class="title is-3 has-text-light">
+                            <i class="fas fa-chart-bar"></i> THREAT ASSESSMENT REPORT
+                        </h3>
+                        <div id="verdictBadge" class="tags has-addons">
+                            <span class="tag is-dark">VERDICT</span>
+                            <span class="tag" id="verdictTag">UNKNOWN</span>
+                        </div>
+                    </div>
+
+                    <!-- Risk Meter -->
+                    <div class="risk-meter">
+                        <div class="risk-arc high"></div>
+                        <div class="risk-arc mid"></div>
+                        <div class="risk-arc"></div>
+                        <div class="risk-needle" id="riskNeedle"></div>
+                    </div>
                     
-                    <!-- Risk Score -->
+                    <!-- Quick Stats -->
                     <div class="level">
                         <div class="level-item has-text-centered">
                             <div>
-                                <p class="heading">Risk Score</p>
-                                <p class="title is-1" id="riskScore">0</p>
-                                <p class="subtitle is-6" id="riskVerdict">UNKNOWN</p>
+                                <p class="heading">RISK SCORE</p>
+                                <p class="title is-1 danger-glow" id="riskScore">0</p>
+                                <p class="subtitle is-6 console-text" id="riskVerdict">INITIALIZING</p>
                             </div>
                         </div>
                         <div class="level-item has-text-centered">
                             <div>
-                                <p class="heading">Google Safe Browsing</p>
-                                <p class="title is-4" id="googleResult">-</p>
+                                <p class="heading">GOOGLE SAFE BROWSING</p>
+                                <p class="title is-3" id="googleResult">-</p>
                                 <p class="subtitle is-6">Threat Detection</p>
                             </div>
                         </div>
                         <div class="level-item has-text-centered">
                             <div>
-                                <p class="heading">VirusTotal</p>
-                                <p class="title is-4" id="vtResult">-</p>
-                                <p class="subtitle is-6">Engine Detections</p>
+                                <p class="heading">VIRUSTOTAL DETECTIONS</p>
+                                <p class="title is-3" id="vtResult">-</p>
+                                <p class="subtitle is-6">Security Engines</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Progress Bar -->
-                    <progress class="progress is-primary" id="riskProgress" value="0" max="100">0%</progress>
+                    <!-- Alert Banner -->
+                    <div id="alertBanner" class="notification is-hidden" style="border-left: 5px solid;">
+                        <div class="is-flex is-justify-content-space-between is-align-items-center">
+                            <div>
+                                <span class="icon is-large">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                                <strong id="alertTitle">SECURITY ALERT</strong>
+                                <span id="alertMessage">Threat detected in scanned URL</span>
+                            </div>
+                            <button class="delete" id="closeAlert"></button>
+                        </div>
+                    </div>
 
                     <!-- Detailed Results -->
                     <div class="content mt-5">
-                        <h4 class="title is-5 has-text-light">Detailed Analysis</h4>
-                        <div id="detailedResults">
-                            <!-- Results will be populated here -->
+                        <h4 class="title is-5 has-text-light">
+                            <i class="fas fa-file-alt"></i> DETAILED ANALYSIS
+                        </h4>
+                        <div class="terminal">
+                            <div id="detailedResults">
+                                <!-- Results will be populated here -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- API Information Card -->
+            <!-- Recent Activity -->
             <div class="card">
                 <div class="card-content">
                     <h3 class="title is-4 has-text-light">
-                        <i class="fas fa-info-circle"></i> About This Scanner
+                        <i class="fas fa-history"></i> SCAN HISTORY
                     </h3>
-                    <p class="has-text-muted">
-                        PhishNet Scanner queries multiple threat intelligence sources to analyze URLs for potential security threats.
-                        It uses Google Safe Browsing and VirusTotal APIs to provide comprehensive threat assessment.
-                    </p>
-                    <br>
-                    <div class="tags">
-                        <span class="tag is-primary">Google Safe Browsing</span>
-                        <span class="tag is-info">VirusTotal</span>
-                        <span class="tag is-warning">Real-time Analysis</span>
-                        <span class="tag is-danger">Threat Intelligence</span>
+                    <div id="scanHistory" class="content">
+                        <p class="has-text-muted">No scan history yet. URLs will appear here after analysis.</p>
                     </div>
                 </div>
             </div>
@@ -177,26 +379,42 @@
 
     <script>
         // Configuration - UPDATE THIS WITH YOUR WORKER URL
-      const API_BASE_URL = 'https://phishnet-scanner.darshandarsha439.workers.dev';
+        const API_BASE_URL = 'https://phishnet-scanner.darshandarsha439.workers.dev/';
 
         // DOM Elements
-        const urlInput = document.getElementById('urlInput');
-        const scanButton = document.getElementById('scanButton');
-        const loadingElement = document.getElementById('loading');
-        const resultsCard = document.getElementById('resultsCard');
-        const riskScoreElement = document.getElementById('riskScore');
-        const riskVerdictElement = document.getElementById('riskVerdict');
-        const googleResultElement = document.getElementById('googleResult');
-        const vtResultElement = document.getElementById('vtResult');
-        const riskProgress = document.getElementById('riskProgress');
-        const detailedResults = document.getElementById('detailedResults');
+        const elements = {
+            urlInput: document.getElementById('urlInput'),
+            scanButton: document.getElementById('scanButton'),
+            loading: document.getElementById('loading'),
+            resultsCard: document.getElementById('resultsCard'),
+            riskScore: document.getElementById('riskScore'),
+            riskVerdict: document.getElementById('riskVerdict'),
+            riskNeedle: document.getElementById('riskNeedle'),
+            googleResult: document.getElementById('googleResult'),
+            vtResult: document.getElementById('vtResult'),
+            verdictTag: document.getElementById('verdictTag'),
+            alertBanner: document.getElementById('alertBanner'),
+            alertTitle: document.getElementById('alertTitle'),
+            alertMessage: document.getElementById('alertMessage'),
+            detailedResults: document.getElementById('detailedResults'),
+            scanHistory: document.getElementById('scanHistory'),
+            totalScans: document.getElementById('totalScans'),
+            safeCount: document.getElementById('safeCount'),
+            suspiciousCount: document.getElementById('suspiciousCount'),
+            dangerousCount: document.getElementById('dangerousCount')
+        };
+
+        let scanCount = 0;
+        let safeScans = 0;
+        let suspiciousScans = 0;
+        let dangerousScans = 0;
 
         // Scan URL function
         async function scanURL() {
-            const urlToScan = urlInput.value.trim();
+            const urlToScan = elements.urlInput.value.trim();
             
             if (!urlToScan) {
-                alert('Please enter a URL to scan');
+                showAlert('warning', 'Input Required', 'Please enter a URL to analyze');
                 return;
             }
 
@@ -204,105 +422,209 @@
             try {
                 new URL(urlToScan);
             } catch (e) {
-                alert('Please enter a valid URL (include http:// or https://)');
+                showAlert('warning', 'Invalid URL', 'Please enter a valid URL (include http:// or https://)');
                 return;
             }
 
             // Show loading state
-            scanButton.disabled = true;
-            scanButton.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Scanning...</span>';
-            loadingElement.classList.remove('is-hidden');
-            resultsCard.classList.add('is-hidden');
+            setLoadingState(true);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/scan`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ urlToScan: urlToScan })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
                 const data = await response.json();
+                
+                // Update statistics
+                updateStatistics(data.riskScore);
+                addToHistory(data);
                 displayResults(data);
+                
+                // Show appropriate alert
+                if (data.riskScore >= 70) {
+                    showAlert('danger', 'HIGH RISK DETECTED!', `URL "${data.url}" shows strong indicators of malicious activity!`);
+                } else if (data.riskScore >= 30) {
+                    showAlert('warning', 'Suspicious Activity', `URL "${data.url}" shows some concerning indicators`);
+                } else {
+                    showAlert('success', 'All Clear', `URL "${data.url}" appears to be safe`);
+                }
 
             } catch (error) {
                 console.error('Scan failed:', error);
-                alert('Scan failed: ' + error.message);
+                showAlert('danger', 'Scan Failed', error.message);
             } finally {
-                // Reset UI
-                scanButton.disabled = false;
-                scanButton.innerHTML = '<span class="icon"><i class="fas fa-search"></i></span><span>Scan URL</span>';
-                loadingElement.classList.add('is-hidden');
+                setLoadingState(false);
             }
         }
 
-        // Display results function
+        // Display results with animations
         function displayResults(data) {
-            // Update risk score and verdict
-            riskScoreElement.textContent = data.riskScore;
-            riskVerdictElement.textContent = data.verdict;
-            riskProgress.value = data.riskScore;
+            // Update risk meter with animation
+            const riskAngle = (data.riskScore / 100) * 180 - 90;
+            elements.riskNeedle.style.transform = `rotate(${riskAngle}deg)`;
+            
+            // Update risk score with count-up animation
+            animateValue(elements.riskScore, 0, data.riskScore, 1000);
+            elements.riskVerdict.textContent = data.verdict;
 
-            // Update card border color based on risk
-            resultsCard.className = 'card';
-            if (data.riskScore < 30) {
-                resultsCard.classList.add('risk-safe');
-                riskScoreElement.className = 'title is-1 has-text-success';
-            } else if (data.riskScore < 70) {
-                resultsCard.classList.add('risk-suspicious');
-                riskScoreElement.className = 'title is-1 has-text-warning';
-            } else {
-                resultsCard.classList.add('risk-dangerous');
-                riskScoreElement.className = 'title is-1 has-text-danger';
-            }
+            // Update card styling based on risk
+            updateRiskStyling(data.riskScore, data.verdict);
 
             // Update API results
-            googleResultElement.textContent = data.details.googleSafeBrowsing.hasMatches ? 'THREATS FOUND' : 'CLEAN';
-            googleResultElement.className = data.details.googleSafeBrowsing.hasMatches ? 'title is-4 has-text-danger' : 'title is-4 has-text-success';
-
-            vtResultElement.textContent = `${data.details.virusTotal.positives}/${data.details.virusTotal.total}`;
-            vtResultElement.className = data.details.virusTotal.positives > 0 ? 'title is-4 has-text-warning' : 'title is-4 has-text-success';
+            elements.googleResult.textContent = data.details.googleSafeBrowsing.hasMatches ? 'THREATS' : 'CLEAN';
+            elements.googleResult.className = data.details.googleSafeBrowsing.hasMatches ? 
+                'title is-3 danger-glow' : 'title is-3 has-text-success';
+            
+            elements.vtResult.textContent = `${data.details.virusTotal.positives}/${data.details.virusTotal.total}`;
+            elements.vtResult.className = data.details.virusTotal.positives > 0 ? 
+                'title is-3 warning-glow' : 'title is-3 has-text-success';
 
             // Update detailed results
-            detailedResults.innerHTML = `
-                <div class="content">
-                    <p><strong>Scanned URL:</strong> <code>${data.url}</code></p>
-                    <p><strong>Scan Time:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
-                    
-                    <h5 class="title is-6 has-text-light mt-4">Google Safe Browsing</h5>
-                    <p>Threats Detected: <strong>${data.details.googleSafeBrowsing.hasMatches ? 'YES' : 'NO'}</strong></p>
-                    ${data.details.googleSafeBrowsing.matches.length > 0 ? 
-                        `<p>Threat Types: ${data.details.googleSafeBrowsing.matches.map(match => match.threatType).join(', ')}</p>` : 
-                        ''}
-                    
-                    <h5 class="title is-6 has-text-light mt-4">VirusTotal</h5>
-                    <p>Detections: <strong>${data.details.virusTotal.positives} out of ${data.details.virusTotal.total}</strong> engines flagged this URL</p>
-                    <p>Last Scan: ${data.details.virusTotal.scanDate}</p>
-                    ${data.details.virusTotal.permalink !== '#' ? 
-                        `<a href="${data.details.virusTotal.permalink}" target="_blank" class="button is-small is-info">View Full Report</a>` : 
-                        ''}
-                </div>
+            elements.detailedResults.innerHTML = `
+                <div class="terminal-line"><span class="terminal-prompt">></span> SCAN INITIATED: ${new Date(data.timestamp).toLocaleString()}</div>
+                <div class="terminal-line"><span class="terminal-prompt">></span> TARGET: ${data.url}</div>
+                <div class="terminal-line"><span class="terminal-prompt">></span> GOOGLE SAFE BROWSING: ${data.details.googleSafeBrowsing.hasMatches ? 'THREATS DETECTED' : 'NO THREATS'}</div>
+                <div class="terminal-line"><span class="terminal-prompt">></span> VIRUSTOTAL: ${data.details.virusTotal.positives} of ${data.details.virusTotal.total} engines detected threats</div>
+                <div class="terminal-line"><span class="terminal-prompt">></span> FINAL VERDICT: ${data.verdict} (Score: ${data.riskScore}/100)</div>
+                ${data.details.virusTotal.permalink !== '#' ? 
+                    `<div class="terminal-line"><span class="terminal-prompt">></span> FULL REPORT: <a href="${data.details.virusTotal.permalink}" target="_blank" style="color: #3273dc;">View on VirusTotal</a></div>` : 
+                    ''}
             `;
 
-            // Show results card
-            resultsCard.classList.remove('is-hidden');
+            // Show results card with animation
+            elements.resultsCard.classList.remove('is-hidden');
+        }
+
+        // Update risk styling and animations
+        function updateRiskStyling(riskScore, verdict) {
+            // Remove all risk classes
+            elements.resultsCard.classList.remove('risk-safe', 'risk-suspicious', 'risk-dangerous');
+            elements.riskScore.classList.remove('has-text-success', 'has-text-warning', 'has-text-danger', 'danger-glow', 'warning-glow');
+            
+            // Add appropriate classes
+            if (riskScore < 30) {
+                elements.resultsCard.classList.add('risk-safe');
+                elements.riskScore.classList.add('has-text-success');
+                elements.verdictTag.className = 'tag is-success';
+            } else if (riskScore < 70) {
+                elements.resultsCard.classList.add('risk-suspicious');
+                elements.riskScore.classList.add('has-text-warning', 'warning-glow');
+                elements.verdictTag.className = 'tag is-warning';
+            } else {
+                elements.resultsCard.classList.add('risk-dangerous');
+                elements.riskScore.classList.add('has-text-danger', 'danger-glow');
+                elements.verdictTag.className = 'tag is-danger alert-pulse';
+            }
+            
+            elements.verdictTag.textContent = verdict;
+        }
+
+        // Show alert banner
+        function showAlert(type, title, message) {
+            elements.alertBanner.className = `notification is-${type} is-hidden`;
+            elements.alertTitle.textContent = title;
+            elements.alertMessage.textContent = message;
+            
+            // Add pulse animation for dangerous alerts
+            if (type === 'danger') {
+                elements.alertBanner.classList.add('alert-pulse');
+            }
+            
+            elements.alertBanner.classList.remove('is-hidden');
+        }
+
+        // Update statistics
+        function updateStatistics(riskScore) {
+            scanCount++;
+            if (riskScore < 30) safeScans++;
+            else if (riskScore < 70) suspiciousScans++;
+            else dangerousScans++;
+            
+            elements.totalScans.textContent = scanCount;
+            elements.safeCount.textContent = safeScans;
+            elements.suspiciousCount.textContent = suspiciousScans;
+            elements.dangerousCount.textContent = dangerousScans;
+        }
+
+        // Add to scan history
+        function addToHistory(data) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'is-flex is-justify-content-space-between is-align-items-center mb-2 p-2';
+            historyItem.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+            
+            const riskClass = data.riskScore < 30 ? 'has-text-success' : data.riskScore < 70 ? 'has-text-warning' : 'has-text-danger';
+            
+            historyItem.innerHTML = `
+                <span class="console-text">${data.url}</span>
+                <div>
+                    <span class="tag ${riskClass}">${data.riskScore}</span>
+                    <span class="tag is-dark ml-2">${new Date(data.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `;
+            
+            elements.scanHistory.insertBefore(historyItem, elements.scanHistory.firstChild);
+            
+            // Limit history to 10 items
+            if (elements.scanHistory.children.length > 10) {
+                elements.scanHistory.removeChild(elements.scanHistory.lastChild);
+            }
+        }
+
+        // Utility functions
+        function setLoadingState(loading) {
+            elements.scanButton.disabled = loading;
+            elements.scanButton.innerHTML = loading ? 
+                '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>SCANNING...</span>' :
+                '<span class="icon"><i class="fas fa-search"></i></span><span>INITIATE SCAN</span>';
+            elements.loading.classList.toggle('is-hidden', !loading);
+            if (!loading) elements.resultsCard.classList.add('is-hidden');
+        }
+
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.textContent = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
         }
 
         // Event Listeners
-        scanButton.addEventListener('click', scanURL);
-        urlInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                scanURL();
-            }
+        elements.scanButton.addEventListener('click', scanURL);
+        elements.urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') scanURL();
+        });
+        document.getElementById('closeAlert').addEventListener('click', () => {
+            elements.alertBanner.classList.add('is-hidden');
         });
 
         // Initialize
-        console.log('PhishNet Scanner Frontend Loaded');
+        console.log('PhishNet Scanner Enterprise Edition Loaded');
+        
+        // Add some demo history items
+        setTimeout(() => {
+            if (elements.scanHistory.children.length === 1) {
+                elements.scanHistory.innerHTML = `
+                    <p class="has-text-muted">Scan URLs to build history. Demo mode active.</p>
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 p-2" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span class="console-text">https://example.com</span>
+                        <div><span class="tag is-success">15</span><span class="tag is-dark ml-2">Demo</span></div>
+                    </div>
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 p-2" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span class="console-text">https://google.com</span>
+                        <div><span class="tag is-success">8</span><span class="tag is-dark ml-2">Demo</span></div>
+                    </div>
+                `;
+            }
+        }, 2000);
     </script>
 </body>
 </html>
